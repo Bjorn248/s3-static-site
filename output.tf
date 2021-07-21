@@ -1,9 +1,9 @@
-output "s3_bucket_arn" {
+output "s3_bucket_name" {
   description = <<EOF
-  ARN of the bucket containing the website files, to be used by iam module to create
+  Name of the bucket containing the website files, to be used by iam module to create
   a policy that provides access to the bucket
   EOF
-  value       = aws_s3_bucket.target.arn
+  value       = aws_s3_bucket.target.id
 }
 
 output "website_url" {
