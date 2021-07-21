@@ -14,7 +14,8 @@ This terraform module creates the following resources:
   * A www alias record pointing at the cloudfront distribution
 
 ## Pre-Requisites
-* A domain (hosted zone) already configured in Route53
+* A domain registered in Route53
+* A hosted zone already configured in Route53 for your registered domain
 
 ## Usage
 
