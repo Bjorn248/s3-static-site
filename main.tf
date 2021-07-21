@@ -59,7 +59,7 @@ resource "aws_s3_bucket_policy" "allow_public_read" {
 
 resource "aws_acm_certificate" "main" {
   provider                  = aws.us-east-1
-  subject_alternative_names = [var.target-domain, var.root-domain]
+  subject_alternative_names = [var.root-domain, var.target-domain]
   domain_name               = var.root-domain
   validation_method         = "DNS"
 }
