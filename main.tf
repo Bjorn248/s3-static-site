@@ -62,6 +62,10 @@ resource "aws_acm_certificate" "main" {
   subject_alternative_names = [var.root-domain, var.target-domain]
   domain_name               = var.root-domain
   validation_method         = "DNS"
+
+  lifecycle {
+    ignore_changes = [subject_alternative_names]
+  }
 }
 
 data "aws_route53_zone" "main" {
