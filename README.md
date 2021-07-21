@@ -48,7 +48,7 @@ with the domain of your choice.
 
 ## Outputs
 
-| Name          | Description                                                  |
-| ------        | -------------                                                |
-| s3_bucket_arn | The ARN of the S3 bucket containing the website source code. |
-| website_url   | The URL of the static site                                   |
+| Name           | Description                                                   |
+| ------         | -------------                                                 |
+| s3_bucket_name | The name of the S3 bucket containing the website source code. |
+| website_url    | The URL of the static site                                    |
