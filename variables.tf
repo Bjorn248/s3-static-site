@@ -40,3 +40,9 @@ variable "spa_mode" {
   type        = bool
   default     = false
 }
+
+variable "create_deployer_iam" {
+  description = "If true, create an IAM user + group + policy with permissions to sync site content to the bucket and invalidate the CloudFront distribution. Intended for CI/CD."
+  type        = bool
+  default     = false
+}

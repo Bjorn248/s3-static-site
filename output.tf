@@ -32,3 +32,23 @@ output "acm_certificate_arn" {
   description = "ARN of the ACM certificate used by CloudFront."
   value       = aws_acm_certificate_validation.main.certificate_arn
 }
+
+output "deployer_iam_user_name" {
+  description = "Name of the IAM user that can sync the bucket and invalidate CloudFront. Null when create_deployer_iam is false."
+  value       = var.create_deployer_iam ? aws_iam_user.deployer[0].name : null
+}
+
+output "deployer_iam_user_arn" {
+  description = "ARN of the deployer IAM user. Null when create_deployer_iam is false."
+  value       = var.create_deployer_iam ? aws_iam_user.deployer[0].arn : null
+}
+
+output "deployer_iam_group_name" {
+  description = "Name of the deployer IAM group. Null when create_deployer_iam is false."
+  value       = var.create_deployer_iam ? aws_iam_group.deployer[0].name : null
+}
+
+output "deployer_iam_policy_arn" {
+  description = "ARN of the deployer IAM policy. Null when create_deployer_iam is false."
+  value       = var.create_deployer_iam ? aws_iam_policy.deployer[0].arn : null
+}

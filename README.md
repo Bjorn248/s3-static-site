@@ -16,6 +16,7 @@ Resources created:
   * A content distribution in front of the bucket (HTTPS, HTTP/3, IPv6, managed caching + security-headers policies)
   * *(apex + redirect mode only)* An apex-redirect distribution that 301-redirects the naked domain to the target via a CloudFront Function — no additional bucket required
 * 2 or 4 Route53 alias records (A + AAAA for the content domain, plus A + AAAA for the apex in redirect mode)
+* *(optional, when `create_deployer_iam = true`)* An IAM user + group + policy granting the permissions needed to sync content to the bucket and invalidate the CloudFront distribution (intended for CI/CD)
 
 ## Pre-Requisites
 * A domain registered with a DNS provider
@@ -67,6 +68,7 @@ module "s3-static-site" {
 | global-tags            | Tags applied to all resources created by this module.                                                              | `map(string)` | `{}`             | no       |
 | enable_versioning      | Enable S3 versioning on the content bucket.                                                                        | `bool`        | `false`          | no       |
 | spa_mode               | Return `/index.html` with HTTP 200 for 403/404 responses (useful for SPAs with client-side routing).               | `bool`        | `false`          | no       |
+| create_deployer_iam    | Create an IAM user/group/policy with permissions to sync the bucket and invalidate CloudFront (for CI/CD).         | `bool`        | `false`          | no       |
 
 ## Outputs
 
@@ -79,3 +81,7 @@ module "s3-static-site" {
 | cloudfront_distribution_arn | CloudFront distribution ARN.                                             |
 | cloudfront_domain_name      | CloudFront-assigned domain name of the content distribution.             |
 | acm_certificate_arn         | ARN of the ACM certificate used by CloudFront.                           |
+| deployer_iam_user_name      | Name of the deployer IAM user (null unless `create_deployer_iam`).       |
+| deployer_iam_user_arn       | ARN of the deployer IAM user (null unless `create_deployer_iam`).        |
+| deployer_iam_group_name     | Name of the deployer IAM group (null unless `create_deployer_iam`).      |
+| deployer_iam_policy_arn     | ARN of the deployer IAM policy (null unless `create_deployer_iam`).      |
