@@ -1,54 +1,81 @@
 # s3-static-site
-Terraform module that creates the resources related to hosting a static site on AWS
+Terraform module that creates the resources related to hosting a static site on AWS.
 
 ## Behavior
-This terraform module creates the following resources:
+This Terraform module supports two modes:
 
-* 1 ACM Certificate
-* 2 S3 buckets
-  * A "root" bucket with just the naked domain (e.g. scca-classifier.com)
-  * A "target" bucket with the www subdomain (e.g. www.scca-classifier.com)
-* 1 Cloudfront Distribution pointing at the www bucket
-* 2 Route53 Records
-  * A root alias record pointing at the root bucket, which redirects to the www domain
-  * A www alias record pointing at the cloudfront distribution
+**Apex + redirect** (set `target-domain`): content is served at `target-domain` (e.g. `www.example.com`) and the apex (`example.com`) 301-redirects to it.
+
+**Apex-only** (leave `target-domain` unset): content is served directly at the root domain (e.g. `example.com`) — no redirect distribution is created.
+
+Resources created:
+
+* 1 ACM certificate (in `us-east-1`, covering the content domain, plus the apex as a SAN in redirect mode)
+* 1 S3 bucket — private, served via CloudFront using an Origin Access Control (OAC)
+* 1 or 2 CloudFront distributions
+  * A content distribution in front of the bucket (HTTPS, HTTP/3, IPv6, managed caching + security-headers policies)
+  * *(apex + redirect mode only)* An apex-redirect distribution that 301-redirects the naked domain to the target via a CloudFront Function — no additional bucket required
+* 2 or 4 Route53 alias records (A + AAAA for the content domain, plus A + AAAA for the apex in redirect mode)
 
 ## Pre-Requisites
-* A domain registered in Route53
-* A hosted zone already configured in Route53 for your registered domain
+* A domain registered with a DNS provider
+* A public hosted zone already configured in Route53 for that domain
+
+## Requirements
+
+| Name      | Version       |
+| --------- | ------------- |
+| terraform | >= 1.5.0      |
+| aws       | >= 5.0, < 7.0 |
 
 ## Usage
 
-```
+Apex + www redirect:
+
+```hcl
 module "s3-static-site" {
   source = "github.com/Bjorn248/s3-static-site"
 
-  root-domain            = "scca-classifier.com"
-  target-domain          = "www.scca-classifier.com"
+  root-domain            = "example.com"
+  target-domain          = "www.example.com"
   cloudfront-price-class = "PriceClass_100"
 
   global-tags = {
-    project = "scca-classifier"
+    project = "my-site"
   }
 }
 ```
 
-NOTE: I used `scca-classifier` as my example domain, since that was the driving
-force behind making this modules. If you wish to use this module, please replace that
-with the domain of your choice.
+Apex-only (serve content directly at the root domain):
+
+```hcl
+module "s3-static-site" {
+  source = "github.com/Bjorn248/s3-static-site"
+
+  root-domain            = "babyfelix.party"
+  cloudfront-price-class = "PriceClass_100"
+}
+```
 
 ## Inputs
 
-| Name                   | Description                                                                                                          | Type   | Default        | Required   |
-| ------                 | -------------                                                                                                        | :----: | :-------:      | :--------: |
-| root-domain            | Naked domain for the website (e.g., `scca-classifier.com`)                                                           | string | -              | yes        |
-| target-domain          | Domain that will be the target of naked domain redirects (e.g., `www.example.com`). This is where users will end up. | string | -              | yes        |
-| cloudfront-price-class | Which cloudfront price class to choose. See [this](https://aws.amazon.com/cloudfront/pricing/) page for more detail. | string | PriceClass_All | no         |
-| global-tags            | A map of tags to apply to all resources created by this module                                                       | map    | -              | no         |
+| Name                   | Description                                                                                                        | Type          | Default          | Required |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------ | :-----------: | :--------------: | :------: |
+| root-domain            | Naked domain for the website (e.g. `example.com`).                                                                 | `string`      | —                | yes      |
+| target-domain          | Target of the naked-domain redirect (e.g. `www.example.com`). Leave unset to serve content at the root domain.     | `string`      | `null`           | no       |
+| cloudfront-price-class | CloudFront price class. One of `PriceClass_All`, `PriceClass_200`, `PriceClass_100`.                               | `string`      | `PriceClass_All` | no       |
+| global-tags            | Tags applied to all resources created by this module.                                                              | `map(string)` | `{}`             | no       |
+| enable_versioning      | Enable S3 versioning on the content bucket.                                                                        | `bool`        | `false`          | no       |
+| spa_mode               | Return `/index.html` with HTTP 200 for 403/404 responses (useful for SPAs with client-side routing).               | `bool`        | `false`          | no       |
 
 ## Outputs
 
-| Name           | Description                                                   |
-| ------         | -------------                                                 |
-| s3_bucket_name | The name of the S3 bucket containing the website source code. |
-| website_url    | The URL of the static site                                    |
+| Name                        | Description                                                              |
+| --------------------------- | ------------------------------------------------------------------------ |
+| s3_bucket_name              | Name of the content bucket.                                              |
+| s3_bucket_arn               | ARN of the content bucket.                                               |
+| website_url                 | URL of the static site.                                                  |
+| cloudfront_distribution_id  | CloudFront distribution ID (use for cache invalidation in CI/CD).        |
+| cloudfront_distribution_arn | CloudFront distribution ARN.                                             |
+| cloudfront_domain_name      | CloudFront-assigned domain name of the content distribution.             |
+| acm_certificate_arn         | ARN of the ACM certificate used by CloudFront.                           |
